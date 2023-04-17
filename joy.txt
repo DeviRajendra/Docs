@@ -1,0 +1,43 @@
+import pygame
+import carla
+import time
+
+# Define the function to control the car
+def control_car(throttle, steer, brake):
+    # Set the throttle, steer, and brake values
+    control = carla.VehicleControl(throttle=throttle, steer=steer, brake=brake)
+    # Apply the control to the car
+    vehicle.apply_control(control)
+
+# Initialize the pygame joystick module
+pygame.init()
+pygame.joystick.init()
+
+# Connect to the CARLA simulator
+client = carla.Client('localhost', 2000)
+client.set_timeout(10.0)
+world = client.get_world()
+map = world.get_map()
+
+# Spawn a vehicle
+spawn_point = carla.Transform(carla.Location(x=0.0, y=0.0, z=2.0), carla.Rotation(yaw=0.0))
+vehicle_bp = world.get_blueprint_library().filter('vehicle.*')[0]
+vehicle = world.spawn_actor(vehicle_bp, spawn_point)
+
+# Get the Logitech joystick
+joystick = pygame.joystick.Joystick(0)
+joystick.init()
+
+# Loop to continuously control the car with the joystick
+while True:
+    # Get the current joystick values
+    pygame.event.pump()
+    throttle = joystick.get_axis(1)
+    steer = joystick.get_axis(0)
+    brake = joystick.get_button(0)
+
+    # Control the car with the joystick values
+    control_car(throttle, steer, brake)
+
+    # Wait a bit to avoid overwhelming the simulator
+    time.sleep(0.01)
