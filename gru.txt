@@ -1,0 +1,24 @@
+In the code you provided, the line that states "a cumulative sum operation is applied along the waypoints dimension to generate the predicted future waypoints" suggests that the model is generating waypoints by cumulatively summing the predicted incremental changes in positions.
+
+Here's what this operation typically means:
+
+Predicted Incremental Changes: The neural network is designed to predict future positions in the form of incremental changes (deltas) from the current positions. In other words, instead of directly predicting absolute positions, it predicts how much the position will change in the x and y coordinates from one waypoint to the next.
+
+Cumulative Sum: To obtain the absolute positions of the waypoints, you perform a cumulative sum operation along the "waypoints" dimension of the output tensor. This means that for each sequence (e.g., for each vehicle trajectory if this is used in a self-driving context), you start with an initial position (usually the last known position) and then iteratively add the predicted changes to the position to compute the positions of all future waypoints.
+
+For example, if the model predicts the following incremental changes for a sequence of waypoints:
+
+csharp
+Copy code
+[delta_x1, delta_y1]
+[delta_x2, delta_y2]
+[delta_x3, delta_y3]
+The cumulative sum operation would result in the absolute positions:
+
+csharp
+Copy code
+[x1, y1]
+[x1 + delta_x1, y1 + delta_y1]
+[x1 + delta_x1 + delta_x2, y1 + delta_y1 + delta_y2]
+[x1 + delta_x1 + delta_x2 + delta_x3, y1 + delta_y1 + delta_y2 + delta_y3]
+This approach is common in trajectory prediction tasks, where the model predicts how a sequence of positions changes over time. By cumulatively summing these changes, you reconstruct the full trajectory or sequence of waypoints. It allows the model to predict waypoints in a relative, incremental manner, which can be useful for various applications, including autonomous navigation and motion planning.
