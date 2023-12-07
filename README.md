@@ -1,3 +1,2 @@
-# Docs
 
-https://discuss.pytorch.org/t/how-to-load-part-of-pre-trained-model/1113/13
+https://drive.google.com/file/d/1-WSFJKerwDbn5T-7-gnzKV1p4UHFWQfm/view?usp=drivesdk
