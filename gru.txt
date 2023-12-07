@@ -1,24 +1,83 @@
-In the code you provided, the line that states "a cumulative sum operation is applied along the waypoints dimension to generate the predicted future waypoints" suggests that the model is generating waypoints by cumulatively summing the predicted incremental changes in positions.
+import torchvision.transforms as transforms
+import random
+import torch
 
-Here's what this operation typically means:
+class Resize2FixedSize:
+    def __init__(self, size):
+        self.size = size
 
-Predicted Incremental Changes: The neural network is designed to predict future positions in the form of incremental changes (deltas) from the current positions. In other words, instead of directly predicting absolute positions, it predicts how much the position will change in the x and y coordinates from one waypoint to the next.
+    def __call__(self, img):
+        img = transforms.functional.resize(img, self.size)
+        return img
 
-Cumulative Sum: To obtain the absolute positions of the waypoints, you perform a cumulative sum operation along the "waypoints" dimension of the output tensor. This means that for each sequence (e.g., for each vehicle trajectory if this is used in a self-driving context), you start with an initial position (usually the last known position) and then iteratively add the predicted changes to the position to compute the positions of all future waypoints.
+class RandomResize:
+    def __init__(self, scale):
+        self.scale = scale
 
-For example, if the model predicts the following incremental changes for a sequence of waypoints:
+    def __call__(self, img):
+        img_size = img.size
+        r_scale = (self.scale[1] - self.scale[0]) * random.random() + self.scale[0]
+        img = transforms.functional.resize(
+            img, (int(img_size[0] * r_scale), int(img_size[1] * r_scale))
+        )
+        return img
 
-csharp
-Copy code
-[delta_x1, delta_y1]
-[delta_x2, delta_y2]
-[delta_x3, delta_y3]
-The cumulative sum operation would result in the absolute positions:
+def create_carla_rgb_transform(
+    input_size,
+    crop_size=None,
+    is_training=False,
+    use_prefetcher=False,
+    scale=None,
+    color_jitter=0.0,
+    auto_augment=None,
+    need_scale=True,
+    interpolation="bilinear",
+    mean=[0.485, 0.456, 0.406],
+    std=[0.229, 0.224, 0.225],
+):
+    tfl = []
 
-csharp
-Copy code
-[x1, y1]
-[x1 + delta_x1, y1 + delta_y1]
-[x1 + delta_x1 + delta_x2, y1 + delta_y1 + delta_y2]
-[x1 + delta_x1 + delta_x2 + delta_x3, y1 + delta_y1 + delta_y2 + delta_y3]
-This approach is common in trajectory prediction tasks, where the model predicts how a sequence of positions changes over time. By cumulatively summing these changes, you reconstruct the full trajectory or sequence of waypoints. It allows the model to predict waypoints in a relative, incremental manner, which can be useful for various applications, including autonomous navigation and motion planning.
+    if isinstance(input_size, (tuple, list)):
+        img_size = input_size[-2:]
+    else:
+        img_size = input_size
+
+    if isinstance(input_size, (tuple, list)):
+        input_size_num = input_size[-1]
+    else:
+        input_size_num = input_size
+
+    if need_scale:
+        if input_size_num == 112:
+            tfl.append(Resize2FixedSize((170, 128)))
+        elif input_size_num == 128:
+            tfl.append(Resize2FixedSize((195, 146)))
+        elif input_size_num == 224:
+            tfl.append(Resize2FixedSize((341, 256)))
+        elif input_size_num == 256:
+            tfl.append(Resize2FixedSize((340, 288)))
+        else:
+            tfl.append(
+                Resize2FixedSize(
+                    (int((input_size_num + 32) / 3.0 * 4.0), input_size_num + 32)
+                )
+            )
+
+    if is_training:
+        if scale:
+            tfl.append(RandomResize(scale))
+        if color_jitter > 0:
+            tfl.append(
+                transforms.ColorJitter(
+                    brightness=color_jitter,
+                    contrast=color_jitter,
+                    saturation=color_jitter,
+                    hue=color_jitter,
+                )
+            )
+            
+    tfl.append(transforms.CenterCrop(img_size))
+    tfl.append(transforms.ToTensor())
+    tfl.append(transforms.Normalize(mean=mean, std=std))
+
+    return transforms.Compose(tfl)
