@@ -6,3 +6,8 @@ https://medium.com/@nahidalam/understanding-yolov7-neural-network-343889e32e4e
 
 
 https://drive.google.com/file/d/1-WSFJKerwDbn5T-7-gnzKV1p4UHFWQfm/view?usp=drivesdk
+
+https://github.com/aishwaryanr/awesome-generative-ai-guide
+https://github.com/khangich/machine-learning-interview
+https://github.com/youssefHosni/Data-Science-Interview-Questions-Answers
+
